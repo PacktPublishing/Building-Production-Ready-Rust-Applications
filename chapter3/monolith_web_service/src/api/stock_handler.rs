@@ -1,8 +1,7 @@
-use crate::data::stock::*;
-use crate::data::*;
-use crate::handlers::core_handler::get_payload_bytes;
-use crate::models::{ReturnInfo, Stock};
-use actix_web::{web, Error, HttpResponse, Responder};
+use crate::api::core_handler::get_payload_bytes;
+use crate::models::Stock;
+use crate::services::stock_service::*;
+use actix_web::{error, web, Error, HttpResponse, Responder};
 use serde_derive::{Deserialize, Serialize};
 use serde_json;
 
@@ -13,16 +12,24 @@ pub struct StockIncr {
 }
 
 pub async fn stock_increment(data: web::Json<StockIncr>) -> Result<HttpResponse, Error> {
-    let connection = get_connection();
-    let stock = increment_stock(&connection, data.id, data.incr_amount);
+    // Call the increment stock service function
+    let stock = increment_stock(data.id, data.incr_amount);
 
+    // Now send the response
     Ok(HttpResponse::Ok().json(stock))
 }
 
 //#[get("/stock/list/")]
 pub async fn stock_list() -> Result<impl Responder, Error> {
-    let stocks = show_stock();
-    Ok(HttpResponse::Ok().json(stocks))
+    // Call the get stock service functions
+    let stocks = get_stock();
+
+    // check if we have received anything, otherwise return an error
+    if stocks.len() > 0 {
+        Ok(HttpResponse::Ok().json(stocks))
+    } else {
+        Err(error::ErrorBadRequest("No Stock"))
+    }
 }
 
 /// The endpoint to create a new stock balance
@@ -41,14 +48,12 @@ pub async fn stock_create(payload: web::Payload) -> Result<HttpResponse, Error> 
         Ok(b) => {
             // body is loaded, now we can deserialize serde-json
             let obj = serde_json::from_slice::<Stock>(&b)?;
-            println!("Success");
 
-            let connection = get_connection();
-            let created_stock = create_stock(&connection, &obj);
+            // Call the stock service function to create stock
+            let created_stock = create_stock(&obj);
 
-            println!("Success");
-
-            Ok(HttpResponse::Ok().json(created_stock)) // <- send response
+            // Now send back the response
+            Ok(HttpResponse::Ok().json(created_stock))
         }
         Err(e) => Err(e),
     }
@@ -72,13 +77,9 @@ pub async fn stock_delete(payload: web::Payload) -> Result<HttpResponse, Error> 
             let obj = serde_json::from_slice::<Stock>(&b)?;
 
             // Delete Order
-            let connection = get_connection();
-            let num_delete = delete_stock(&connection, &obj);
+            let return_info = delete_stock(&obj);
 
-            let return_info = ReturnInfo { amount: num_delete };
-
-            println!("Success");
-
+            // Now send the response
             Ok(HttpResponse::Ok().json(return_info)) // <- send response
         }
         Err(e) => Err(e),
@@ -102,11 +103,10 @@ pub async fn stock_update(payload: web::Payload) -> Result<HttpResponse, Error> 
             // body is loaded, now we can deserialize serde-json
             let obj = serde_json::from_slice::<Stock>(&b)?;
 
-            // Update Order
-            let connection = get_connection();
-            let stock = update_stock(&connection, &obj);
+            // Call the update stock service function
+            let stock = update_stock(&obj);
 
-            println!("Success");
+            // Now send the response
             Ok(HttpResponse::Ok().json(stock)) // <- send response
         }
         Err(e) => Err(e),
@@ -116,7 +116,8 @@ pub async fn stock_update(payload: web::Payload) -> Result<HttpResponse, Error> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::handlers::stock_handler;
+    use crate::api::stock_handler;
+    use crate::models::{ReturnInfo, Stock};
     use actix_web::{test, web, App};
 
     async fn create_test_stock(payload: &'static [u8]) -> Stock {

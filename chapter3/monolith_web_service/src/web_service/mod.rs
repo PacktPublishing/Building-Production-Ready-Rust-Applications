@@ -1,4 +1,4 @@
-use crate::handlers::{core_handler, order_handler, product_handler, stock_handler};
+use crate::api::{core_handler, order_handler, product_handler, stock_handler};
 use actix_web::dev::Server;
 use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 use futures::executor;

@@ -13,13 +13,16 @@ pub async fn stop(stop_server: web::Data<mpsc::Sender<()>>) -> impl Responder {
 
 pub async fn get_payload_bytes(mut payload: web::Payload) -> Result<web::BytesMut, Error> {
     let mut body = web::BytesMut::new();
-    while let Some(chunk) = payload.next().await {
-        let chunk = chunk?;
+    while let Some(data_chunk) = payload.next().await {
+
+        // Get the data chunks
+        let data_chunk = data_chunk?;
+
         // limit max size of in-memory payload
-        if (body.len() + chunk.len()) > MAX_PAYLOAD_SIZE {
+        if (body.len() + data_chunk.len()) > MAX_PAYLOAD_SIZE {
             return Err(error::ErrorBadRequest("overflow"));
         }
-        body.extend_from_slice(&chunk);
+        body.extend_from_slice(&data_chunk);
     }
 
     Ok(body)

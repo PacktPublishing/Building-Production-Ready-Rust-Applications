@@ -2,12 +2,11 @@
 extern crate diesel;
 extern crate dotenv;
 
+mod api;
 mod data;
-mod handlers;
 mod models;
-mod order;
-mod products;
 mod schema;
+mod services;
 mod web_service;
 
 use crate::web_service::WebService;

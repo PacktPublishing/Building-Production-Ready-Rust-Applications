@@ -1,8 +1,6 @@
-use crate::data::orders::*;
-use crate::data::*;
-use crate::handlers::core_handler::get_payload_bytes;
+use crate::api::core_handler::get_payload_bytes;
 use crate::models::Order;
-use crate::order::complete_fulfill_order;
+use crate::services::order_service::*;
 use actix_web::{get, web, Error, HttpResponse, Responder};
 use serde_derive::{Deserialize, Serialize};
 use serde_json;
@@ -63,13 +61,11 @@ pub async fn order_create(payload: web::Payload) -> Result<HttpResponse, Error> 
         Ok(b) => {
             // body is loaded, now we can deserialize serde-json
             let obj = serde_json::from_slice::<Order>(&b)?;
-            println!("Success");
 
-            let connection = get_connection();
-            let created_order = create_order(&connection, &obj);
+            // Call the create order service function
+            let created_order = create_order(&obj);
 
-            //show_posts(false);
-
+            // Return a response
             Ok(HttpResponse::Ok().json(created_order)) // <- send response
         }
         Err(e) => Err(e),
@@ -82,7 +78,7 @@ pub async fn order_create(payload: web::Payload) -> Result<HttpResponse, Error> 
 /// * 'payload' - this contains the JSON body data for the new order
 ///            
 /// # Return type
-/// 
+///
 /// * HTTPResponse or Error
 ///
 pub async fn order_cancel(payload: web::Payload) -> Result<HttpResponse, Error> {
@@ -94,11 +90,10 @@ pub async fn order_cancel(payload: web::Payload) -> Result<HttpResponse, Error> 
             // body is loaded, now we can deserialize serde-json
             let obj = serde_json::from_slice::<Order>(&b)?;
 
-            // Delete Order
-            let connection = get_connection();
-            delete_order(&connection, &obj);
+            // Call delete order service function
+            delete_order(&obj);
 
-            println!("Success");
+            // Now return a response
             Ok(HttpResponse::Ok().json(obj)) // <- send response
         }
         Err(e) => Err(e),
@@ -122,11 +117,10 @@ pub async fn order_update(payload: web::Payload) -> Result<HttpResponse, Error> 
             // body is loaded, now we can deserialize serde-json
             let obj = serde_json::from_slice::<Order>(&b)?;
 
-            // Update Order
-            let connection = get_connection();
-            update_order(&connection, &obj);
+            // Call the update order service function
+            update_order(&obj);
 
-            println!("Success");
+            // Now send a response
             Ok(HttpResponse::Ok().json(obj)) // <- send response
         }
         Err(e) => Err(e),

@@ -5,8 +5,10 @@ use crate::schema::products::dsl::*;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 
-pub fn create_product<'a>(conn: &PgConnection, product: &'a Product) -> Product {
+pub fn create_product<'a>(product: &'a Product) -> Product {
     use schema::products;
+
+    let conn = get_connection();
 
     let new_product = NewProduct {
         product_name: product.product_name.clone(),
@@ -16,7 +18,7 @@ pub fn create_product<'a>(conn: &PgConnection, product: &'a Product) -> Product 
 
     let ret = diesel::insert_into(products::table)
         .values(&new_product)
-        .get_result(conn)
+        .get_result(&conn)
         .expect("Error saving new post");
 
     println!("Ret: {:?}", ret);

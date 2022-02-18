@@ -1,7 +1,6 @@
-use crate::data::products::*;
-use crate::data::*;
-use crate::handlers::core_handler::get_payload_bytes;
+use crate::api::core_handler::get_payload_bytes;
 use crate::models::Product;
+use crate::services::product_service::*;
 use actix_web::{web, Error, HttpResponse, Responder};
 use serde_json;
 
@@ -33,13 +32,11 @@ pub async fn product_create(payload: web::Payload) -> Result<HttpResponse, Error
         Ok(b) => {
             // body is loaded, now we can deserialize serde-json
             let obj = serde_json::from_slice::<Product>(&b)?;
-            println!("Success");
 
-            let connection = get_connection();
-            let created_product = create_product(&connection, &obj);
+            // Call the create product service function
+            let created_product = create_product(&obj);
 
-            //show_posts(false);
-
+            // Now return a response
             Ok(HttpResponse::Ok().json(created_product)) // <- send response
         }
         Err(e) => Err(e),
@@ -63,11 +60,10 @@ pub async fn product_delete(payload: web::Payload) -> Result<HttpResponse, Error
             // body is loaded, now we can deserialize serde-json
             let obj = serde_json::from_slice::<Product>(&b)?;
 
-            // Delete Order
-            let connection = get_connection();
-            delete_product(&connection, &obj);
+            // Call the delete product service function
+            delete_product(&obj);
 
-            println!("Success");
+            // Now return a response
             Ok(HttpResponse::Ok().json(obj)) // <- send response
         }
         Err(e) => Err(e),
@@ -91,11 +87,10 @@ pub async fn product_update(payload: web::Payload) -> Result<HttpResponse, Error
             // body is loaded, now we can deserialize serde-json
             let obj = serde_json::from_slice::<Product>(&b)?;
 
-            // Update Order
-            let connection = get_connection();
-            update_product(&connection, &obj);
+            // Call the update product service
+            update_product(&obj);
 
-            println!("Success");
+            // Now return a response
             Ok(HttpResponse::Ok().json(obj)) // <- send response
         }
         Err(e) => Err(e),
